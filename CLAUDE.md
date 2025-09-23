@@ -3,6 +3,8 @@
 
 # development workflow
 
+if it is available, make 2,3 agents work in parallel
+
 1. architect agent: design API specifications, data models, and system architecture
 - write result to 'docs/api_specifications.md', 'docs/data_models.md', 'docs/system_architecture.md'
 - Any important decisions MUST be documented in CLAUDE.md
