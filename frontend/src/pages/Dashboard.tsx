@@ -262,14 +262,14 @@ const Dashboard: React.FC = () => {
     <Container>
       <Header>
         <Logo>살래말래</Logo>
-        <Button variant="secondary" onClick={handleLogout}>
+        <Button variant="secondary" onClick={handleLogout} data-testid="logout-button">
           로그아웃
         </Button>
       </Header>
 
       <ProfileCard>
         <ProfileHeader>
-          <UserInfo>
+          <UserInfo data-testid="user-info">
             <h2>{profile.username}님 환영합니다!</h2>
             <p>{profile.email}</p>
           </UserInfo>

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import styled from '@emotion/styled';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { LoginFormData } from '../../types/auth.types';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -138,14 +138,20 @@ const schema = yup.object({
 
 const LoginForm: React.FC = () => {
   const { login, error: authError, clearError } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isLoading, setIsLoading] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValidating },
+    trigger,
   } = useForm<LoginFormData>({
     resolver: yupResolver(schema),
+    mode: 'onChange', // Enable real-time validation
+    reValidateMode: 'onChange',
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -153,10 +159,25 @@ const LoginForm: React.FC = () => {
     clearError();
     try {
       await login(data);
+      // Navigate to dashboard after successful login
+      // If user was redirected to login from a private route, go back to that route
+      const from = (location.state as any)?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     } catch (error) {
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleFieldBlur = async (fieldName: keyof LoginFormData) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    await trigger(fieldName);
+  };
+
+  const handleFieldChange = async (fieldName: keyof LoginFormData) => {
+    if (touched[fieldName]) {
+      await trigger(fieldName);
     }
   };
 
@@ -180,10 +201,19 @@ const LoginForm: React.FC = () => {
               id="email"
               type="email"
               placeholder="example@email.com"
-              hasError={!!errors.email}
-              {...register('email')}
+              hasError={touched.email && !!errors.email}
+              {...register('email', {
+                onBlur: () => handleFieldBlur('email'),
+                onChange: () => handleFieldChange('email'),
+              })}
+              aria-invalid={touched.email && !!errors.email}
+              aria-describedby={touched.email && errors.email ? 'email-error' : undefined}
             />
-            {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+            {touched.email && errors.email && (
+              <ErrorMessage id="email-error" role="alert">
+                {errors.email.message}
+              </ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
@@ -192,10 +222,19 @@ const LoginForm: React.FC = () => {
               id="password"
               type="password"
               placeholder="비밀번호를 입력하세요"
-              hasError={!!errors.password}
-              {...register('password')}
+              hasError={touched.password && !!errors.password}
+              {...register('password', {
+                onBlur: () => handleFieldBlur('password'),
+                onChange: () => handleFieldChange('password'),
+              })}
+              aria-invalid={touched.password && !!errors.password}
+              aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
             />
-            {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
+            {touched.password && errors.password && (
+              <ErrorMessage id="password-error" role="alert">
+                {errors.password.message}
+              </ErrorMessage>
+            )}
           </FormGroup>
 
           <ForgotPasswordLink>

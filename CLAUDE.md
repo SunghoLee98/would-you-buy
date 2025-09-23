@@ -14,11 +14,13 @@
 - All the backend source code MUST be stored in './backend' directory
 - MUST implement features according to the specifications in 'docs/api_specifications.md', 'docs/data_models.md', and 'docs/system_architecture.md'
 - MUSH write test code for each feature and make sure all tests pass
+- Use context 7 mcp to reference official manual
 - Every feature MUST be committed to the git repository with clear commit messages
 
 3. frontend developer agent: design and implement the user interface
 - All the frontend source code MUST be stored in './frontend' directory
 - Every feature MUST be committed to the git repository with clear commit messages
+- Use context 7 mcp to reference official manual
 - MUST implement the frontend according to the API specifications in 'docs/api_specifications.md'
 
 4. tester agent: write and execute test cases based on playwrite to ensure the quality of the code
@@ -32,7 +34,7 @@
 # environment
 
 - backend: localhost:7070
-- frontend: localhost:5000
+- frontend: localhost:5001
 - database: localhost:5432
 
 # technical stack

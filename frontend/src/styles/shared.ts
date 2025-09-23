@@ -40,16 +40,29 @@ export const Input = styled.input<{ hasError?: boolean }>`
   border: 2px solid ${props => props.hasError ? theme.colors.error : theme.colors.gray[300]};
   border-radius: ${theme.borderRadius.md};
   font-size: ${theme.fontSizes.md};
+  background: ${props => props.hasError ? 'rgba(244, 67, 54, 0.02)' : theme.colors.white};
   transition: ${theme.transitions.fast};
+  outline: none;
 
   &:focus {
     border-color: ${props => props.hasError ? theme.colors.error : theme.colors.primary};
     box-shadow: 0 0 0 3px ${props =>
       props.hasError ? 'rgba(244, 67, 54, 0.1)' : 'rgba(102, 126, 234, 0.1)'};
+    background: ${theme.colors.white};
+  }
+
+  &:hover:not(:focus) {
+    border-color: ${props => props.hasError ? theme.colors.error : theme.colors.gray[400]};
   }
 
   &::placeholder {
     color: ${theme.colors.gray[400]};
+  }
+
+  &:disabled {
+    background: ${theme.colors.gray[100]};
+    cursor: not-allowed;
+    opacity: 0.6;
   }
 `;
 
@@ -108,28 +121,65 @@ export const Button = styled.button<{ variant?: 'primary' | 'secondary' | 'ghost
 `;
 
 export const ErrorMessage = styled.span`
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.xs};
   margin-top: ${theme.spacing.xs};
+  padding: ${theme.spacing.xs} ${theme.spacing.sm};
+  background: rgba(244, 67, 54, 0.08);
+  border-left: 3px solid ${theme.colors.error};
+  border-radius: ${theme.borderRadius.sm};
   color: ${theme.colors.error};
   font-size: ${theme.fontSizes.sm};
-  animation: fadeIn 0.3s ease;
+  font-weight: ${theme.fontWeights.medium};
+  animation: slideIn 0.3s ease;
 
-  @keyframes fadeIn {
+  &::before {
+    content: '⚠️';
+    font-size: ${theme.fontSizes.xs};
+  }
+
+  @keyframes slideIn {
     from {
       opacity: 0;
+      transform: translateX(-10px);
     }
     to {
       opacity: 1;
+      transform: translateX(0);
     }
   }
 `;
 
 export const SuccessMessage = styled.span`
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: ${theme.spacing.xs};
   margin-top: ${theme.spacing.xs};
+  padding: ${theme.spacing.xs} ${theme.spacing.sm};
+  background: rgba(76, 175, 80, 0.08);
+  border-left: 3px solid ${theme.colors.success};
+  border-radius: ${theme.borderRadius.sm};
   color: ${theme.colors.success};
   font-size: ${theme.fontSizes.sm};
-  animation: fadeIn 0.3s ease;
+  font-weight: ${theme.fontWeights.medium};
+  animation: slideIn 0.3s ease;
+
+  &::before {
+    content: '✓';
+    font-size: ${theme.fontSizes.xs};
+  }
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 `;
 
 export const Link = styled.a`

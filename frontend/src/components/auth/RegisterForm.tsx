@@ -124,6 +124,10 @@ const schema = yup.object({
   password: yup
     .string()
     .min(8, '비밀번호는 최소 8자 이상이어야 합니다.')
+    .matches(/[A-Z]/, '비밀번호는 대문자를 포함해야 합니다.')
+    .matches(/[a-z]/, '비밀번호는 소문자를 포함해야 합니다.')
+    .matches(/[0-9]/, '비밀번호는 숫자를 포함해야 합니다.')
+    .matches(/[!@#$%^&*(),.?":{}|<>]/, '비밀번호는 특수문자를 포함해야 합니다.')
     .required('비밀번호를 입력해주세요.'),
   passwordConfirm: yup
     .string()
@@ -144,14 +148,18 @@ const RegisterForm: React.FC = () => {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [checkingUsername, setCheckingUsername] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const {
     register,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, isValidating },
+    trigger,
   } = useForm<RegisterFormData>({
     resolver: yupResolver(schema),
+    mode: 'onChange',
+    reValidateMode: 'onChange',
   });
 
   const watchPassword = watch('password');
@@ -225,6 +233,17 @@ const RegisterForm: React.FC = () => {
     return () => clearTimeout(timer);
   }, [watchUsername, errors.username]);
 
+  const handleFieldBlur = async (fieldName: keyof RegisterFormData) => {
+    setTouched(prev => ({ ...prev, [fieldName]: true }));
+    await trigger(fieldName);
+  };
+
+  const handleFieldChange = async (fieldName: keyof RegisterFormData) => {
+    if (touched[fieldName]) {
+      await trigger(fieldName);
+    }
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
     // Check availability before submission
     if (emailAvailable === false || usernameAvailable === false) {
@@ -273,12 +292,21 @@ const RegisterForm: React.FC = () => {
               id="email"
               type="email"
               placeholder="example@email.com"
-              hasError={!!errors.email || emailAvailable === false}
-              {...register('email')}
+              hasError={(touched.email && !!errors.email) || emailAvailable === false}
+              {...register('email', {
+                onBlur: () => handleFieldBlur('email'),
+                onChange: () => handleFieldChange('email'),
+              })}
+              aria-invalid={(touched.email && !!errors.email) || emailAvailable === false}
+              aria-describedby={
+                (touched.email && errors.email) || emailAvailable === false ? 'email-error' : undefined
+              }
             />
-            {errors.email && <ErrorMessage>{errors.email.message}</ErrorMessage>}
+            {touched.email && errors.email && (
+              <ErrorMessage id="email-error" role="alert">{errors.email.message}</ErrorMessage>
+            )}
             {!errors.email && emailAvailable === false && (
-              <ErrorMessage>이미 사용중인 이메일입니다.</ErrorMessage>
+              <ErrorMessage role="alert">이미 사용중인 이메일입니다.</ErrorMessage>
             )}
           </FormGroup>
 
@@ -297,12 +325,21 @@ const RegisterForm: React.FC = () => {
               id="username"
               type="text"
               placeholder="2~20자의 한글, 영문, 숫자"
-              hasError={!!errors.username || usernameAvailable === false}
-              {...register('username')}
+              hasError={(touched.username && !!errors.username) || usernameAvailable === false}
+              {...register('username', {
+                onBlur: () => handleFieldBlur('username'),
+                onChange: () => handleFieldChange('username'),
+              })}
+              aria-invalid={(touched.username && !!errors.username) || usernameAvailable === false}
+              aria-describedby={
+                (touched.username && errors.username) || usernameAvailable === false ? 'username-error' : undefined
+              }
             />
-            {errors.username && <ErrorMessage>{errors.username.message}</ErrorMessage>}
+            {touched.username && errors.username && (
+              <ErrorMessage id="username-error" role="alert">{errors.username.message}</ErrorMessage>
+            )}
             {!errors.username && usernameAvailable === false && (
-              <ErrorMessage>이미 사용중인 닉네임입니다.</ErrorMessage>
+              <ErrorMessage role="alert">이미 사용중인 닉네임입니다.</ErrorMessage>
             )}
           </FormGroup>
 
@@ -312,8 +349,13 @@ const RegisterForm: React.FC = () => {
               id="password"
               type="password"
               placeholder="대소문자, 숫자, 특수문자 포함 8자 이상"
-              hasError={!!errors.password}
-              {...register('password')}
+              hasError={touched.password && !!errors.password}
+              {...register('password', {
+                onBlur: () => handleFieldBlur('password'),
+                onChange: () => handleFieldChange('password'),
+              })}
+              aria-invalid={touched.password && !!errors.password}
+              aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
             />
             {watchPassword && (
               <PasswordStrength strength={passwordStrength}>
@@ -323,9 +365,8 @@ const RegisterForm: React.FC = () => {
                 <span />
               </PasswordStrength>
             )}
-            {errors.password && <ErrorMessage>{errors.password.message}</ErrorMessage>}
-            {!errors.password && watchPassword && validatePassword(watchPassword) && (
-              <ErrorMessage>{validatePassword(watchPassword)}</ErrorMessage>
+            {touched.password && errors.password && (
+              <ErrorMessage id="password-error" role="alert">{errors.password.message}</ErrorMessage>
             )}
           </FormGroup>
 
@@ -335,10 +376,17 @@ const RegisterForm: React.FC = () => {
               id="passwordConfirm"
               type="password"
               placeholder="비밀번호를 다시 입력하세요"
-              hasError={!!errors.passwordConfirm}
-              {...register('passwordConfirm')}
+              hasError={touched.passwordConfirm && !!errors.passwordConfirm}
+              {...register('passwordConfirm', {
+                onBlur: () => handleFieldBlur('passwordConfirm'),
+                onChange: () => handleFieldChange('passwordConfirm'),
+              })}
+              aria-invalid={touched.passwordConfirm && !!errors.passwordConfirm}
+              aria-describedby={touched.passwordConfirm && errors.passwordConfirm ? 'passwordConfirm-error' : undefined}
             />
-            {errors.passwordConfirm && <ErrorMessage>{errors.passwordConfirm.message}</ErrorMessage>}
+            {touched.passwordConfirm && errors.passwordConfirm && (
+              <ErrorMessage id="passwordConfirm-error" role="alert">{errors.passwordConfirm.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <FormGroup>
@@ -346,7 +394,10 @@ const RegisterForm: React.FC = () => {
               <Checkbox
                 id="termsAccepted"
                 type="checkbox"
-                {...register('termsAccepted')}
+                {...register('termsAccepted', {
+                  onBlur: () => handleFieldBlur('termsAccepted'),
+                  onChange: () => handleFieldChange('termsAccepted'),
+                })}
               />
               <CheckboxLabel htmlFor="termsAccepted">
                 <StyledLink to="/terms" target="_blank">
@@ -359,7 +410,9 @@ const RegisterForm: React.FC = () => {
                 에 동의합니다
               </CheckboxLabel>
             </CheckboxWrapper>
-            {errors.termsAccepted && <ErrorMessage>{errors.termsAccepted.message}</ErrorMessage>}
+            {touched.termsAccepted && errors.termsAccepted && (
+              <ErrorMessage role="alert">{errors.termsAccepted.message}</ErrorMessage>
+            )}
           </FormGroup>
 
           <Button

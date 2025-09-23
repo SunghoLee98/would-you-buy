@@ -5,8 +5,8 @@ spring:
     active: dev
   datasource:
     url: jdbc:postgresql://localhost:5432/salae_malae_db
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    username: ${DB_USERNAME:daou}
+    password: ${DB_PASSWORD:daou}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20

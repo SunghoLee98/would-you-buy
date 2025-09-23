@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>유효성 검사 테스트</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #1f2937;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input.error {
+            border-color: #f44336;
+            background: rgba(244, 67, 54, 0.02);
+        }
+
+        input.error:focus {
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+        }
+
+        .error-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(244, 67, 54, 0.08);
+            border-left: 3px solid #f44336;
+            border-radius: 4px;
+            color: #f44336;
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        .error-message::before {
+            content: '⚠️';
+            font-size: 12px;
+        }
+
+        .success-message {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(76, 175, 80, 0.08);
+            border-left: 3px solid #4caf50;
+            border-radius: 4px;
+            color: #4caf50;
+            font-size: 14px;
+            font-weight: 500;
+            animation: slideIn 0.3s ease;
+        }
+
+        .success-message::before {
+            content: '✓';
+            font-size: 12px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .button {
+            width: 100%;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 24px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .password-strength {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .password-strength span {
+            flex: 1;
+            height: 4px;
+            border-radius: 2px;
+            background: #d1d5db;
+            transition: all 0.3s ease;
+        }
+
+        .password-strength.weak span:nth-child(1) {
+            background: #f44336;
+        }
+
+        .password-strength.medium span:nth-child(1),
+        .password-strength.medium span:nth-child(2) {
+            background: #ff9800;
+        }
+
+        .password-strength.good span:nth-child(1),
+        .password-strength.good span:nth-child(2),
+        .password-strength.good span:nth-child(3) {
+            background: #ffc107;
+        }
+
+        .password-strength.strong span {
+            background: #4caf50;
+        }
+
+        .availability-indicator {
+            margin-left: 8px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .availability-indicator.available {
+            color: #4caf50;
+        }
+
+        .availability-indicator.unavailable {
+            color: #f44336;
+        }
+
+        .demo-section {
+            margin-top: 40px;
+            padding-top: 32px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .demo-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 16px;
+        }
+
+        .demo-info {
+            background: #f3f4f6;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .demo-info p {
+            color: #6b7280;
+            font-size: 14px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .demo-info p:last-child {
+            margin-bottom: 0;
+        }
+
+        .test-case {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .test-case strong {
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>살래말래</h1>
+        <p class="subtitle">유효성 검사 테스트 페이지</p>
+
+        <form id="testForm">
+            <div class="form-group">
+                <label for="email">
+                    이메일
+                    <span class="availability-indicator" id="emailAvailability"></span>
+                </label>
+                <input
+                    type="email"
+                    id="email"
+                    placeholder="example@email.com"
+                    aria-describedby="email-error"
+                >
+                <div id="email-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="username">
+                    닉네임
+                    <span class="availability-indicator" id="usernameAvailability"></span>
+                </label>
+                <input
+                    type="text"
+                    id="username"
+                    placeholder="2~20자의 한글, 영문, 숫자"
+                    aria-describedby="username-error"
+                >
+                <div id="username-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">비밀번호</label>
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="대소문자, 숫자, 특수문자 포함 8자 이상"
+                    aria-describedby="password-error"
+                >
+                <div class="password-strength" id="passwordStrength">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div id="password-error"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="passwordConfirm">비밀번호 확인</label>
+                <input
+                    type="password"
+                    id="passwordConfirm"
+                    placeholder="비밀번호를 다시 입력하세요"
+                    aria-describedby="passwordConfirm-error"
+                >
+                <div id="passwordConfirm-error"></div>
+            </div>
+
+            <button type="submit" class="button">회원가입</button>
+        </form>
+
+        <div class="demo-section">
+            <h2 class="demo-title">테스트 시나리오</h2>
+
+            <div class="demo-info">
+                <p><strong>✅ 개선된 기능:</strong></p>
+                <p>1. 실시간 유효성 검사 피드백</p>
+                <p>2. 시각적으로 개선된 에러 메시지</p>
+                <p>3. 필드별 포커스/블러 이벤트 처리</p>
+                <p>4. 비밀번호 강도 표시기</p>
+                <p>5. 이메일/닉네임 중복 확인 시뮬레이션</p>
+            </div>
+
+            <div class="test-case">
+                <strong>테스트 1:</strong> 빈 필드에서 포커스를 잃으면 에러 메시지 표시
+            </div>
+            <div class="test-case">
+                <strong>테스트 2:</strong> 잘못된 이메일 형식 입력 시 에러 표시
+            </div>
+            <div class="test-case">
+                <strong>테스트 3:</strong> 비밀번호 입력 시 강도 표시기 업데이트
+            </div>
+            <div class="test-case">
+                <strong>테스트 4:</strong> 비밀번호 불일치 시 에러 표시
+            </div>
+            <div class="test-case">
+                <strong>테스트 5:</strong> 유효한 입력 시 에러 메시지 제거
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Validation functions
+        function validateEmail(email) {
+            if (!email) return '이메일을 입력해주세요.';
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) return '올바른 이메일 형식이 아닙니다.';
+            return null;
+        }
+
+        function validateUsername(username) {
+            if (!username) return '닉네임을 입력해주세요.';
+            if (username.length < 2 || username.length > 20) {
+                return '닉네임은 2자 이상 20자 이하여야 합니다.';
+            }
+            if (!/^[a-zA-Z0-9가-힣]+$/.test(username)) {
+                return '닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.';
+            }
+            return null;
+        }
+
+        function validatePassword(password) {
+            if (!password) return '비밀번호를 입력해주세요.';
+            if (password.length < 8) return '비밀번호는 최소 8자 이상이어야 합니다.';
+            if (!/[A-Z]/.test(password)) return '비밀번호는 대문자를 포함해야 합니다.';
+            if (!/[a-z]/.test(password)) return '비밀번호는 소문자를 포함해야 합니다.';
+            if (!/[0-9]/.test(password)) return '비밀번호는 숫자를 포함해야 합니다.';
+            if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return '비밀번호는 특수문자를 포함해야 합니다.';
+            return null;
+        }
+
+        function getPasswordStrength(password) {
+            if (!password) return 0;
+            let strength = 0;
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+            return Math.min(strength, 4);
+        }
+
+        // Touched state tracking
+        const touched = {};
+
+        // Show error message
+        function showError(fieldId, message) {
+            const errorDiv = document.getElementById(`${fieldId}-error`);
+            const input = document.getElementById(fieldId);
+
+            errorDiv.innerHTML = `<div class="error-message" role="alert">${message}</div>`;
+            input.classList.add('error');
+            input.setAttribute('aria-invalid', 'true');
+        }
+
+        // Clear error message
+        function clearError(fieldId) {
+            const errorDiv = document.getElementById(`${fieldId}-error`);
+            const input = document.getElementById(fieldId);
+
+            errorDiv.innerHTML = '';
+            input.classList.remove('error');
+            input.setAttribute('aria-invalid', 'false');
+        }
+
+        // Simulate availability check
+        function checkAvailability(fieldId, value) {
+            const indicator = document.getElementById(`${fieldId}Availability`);
+
+            // Simulate server check
+            indicator.textContent = '확인중...';
+            indicator.className = 'availability-indicator';
+
+            setTimeout(() => {
+                // Simulate some values being taken
+                const taken = ['admin@example.com', 'test@test.com', 'admin', 'test'];
+                const isAvailable = !taken.includes(value.toLowerCase());
+
+                if (value && !document.getElementById(fieldId).classList.contains('error')) {
+                    if (isAvailable) {
+                        indicator.textContent = '사용 가능';
+                        indicator.className = 'availability-indicator available';
+                    } else {
+                        indicator.textContent = '사용 중';
+                        indicator.className = 'availability-indicator unavailable';
+                        showError(fieldId, `이미 사용중인 ${fieldId === 'email' ? '이메일' : '닉네임'}입니다.`);
+                    }
+                } else {
+                    indicator.textContent = '';
+                }
+            }, 500);
+        }
+
+        // Update password strength indicator
+        function updatePasswordStrength(password) {
+            const strengthDiv = document.getElementById('passwordStrength');
+            const strength = getPasswordStrength(password);
+
+            strengthDiv.className = 'password-strength';
+            if (strength === 1) strengthDiv.className += ' weak';
+            else if (strength === 2) strengthDiv.className += ' medium';
+            else if (strength === 3) strengthDiv.className += ' good';
+            else if (strength >= 4) strengthDiv.className += ' strong';
+        }
+
+        // Validate field
+        function validateField(fieldId) {
+            const field = document.getElementById(fieldId);
+            const value = field.value;
+
+            if (!touched[fieldId]) return;
+
+            let error = null;
+
+            switch(fieldId) {
+                case 'email':
+                    error = validateEmail(value);
+                    if (!error) checkAvailability('email', value);
+                    break;
+                case 'username':
+                    error = validateUsername(value);
+                    if (!error) checkAvailability('username', value);
+                    break;
+                case 'password':
+                    error = validatePassword(value);
+                    updatePasswordStrength(value);
+                    break;
+                case 'passwordConfirm':
+                    const password = document.getElementById('password').value;
+                    if (!value) {
+                        error = '비밀번호 확인을 입력해주세요.';
+                    } else if (value !== password) {
+                        error = '비밀번호가 일치하지 않습니다.';
+                    }
+                    break;
+            }
+
+            if (error) {
+                showError(fieldId, error);
+            } else {
+                clearError(fieldId);
+            }
+        }
+
+        // Add event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const fields = ['email', 'username', 'password', 'passwordConfirm'];
+
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+
+                // Blur event - mark as touched and validate
+                field.addEventListener('blur', () => {
+                    touched[fieldId] = true;
+                    validateField(fieldId);
+                });
+
+                // Input event - validate only if touched
+                field.addEventListener('input', () => {
+                    if (touched[fieldId]) {
+                        validateField(fieldId);
+                    }
+
+                    // Always update password strength
+                    if (fieldId === 'password') {
+                        updatePasswordStrength(field.value);
+                    }
+                });
+            });
+
+            // Form submission
+            document.getElementById('testForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                // Mark all fields as touched
+                fields.forEach(fieldId => {
+                    touched[fieldId] = true;
+                    validateField(fieldId);
+                });
+
+                // Check if form is valid
+                const hasErrors = fields.some(fieldId => {
+                    const errorDiv = document.getElementById(`${fieldId}-error`);
+                    return errorDiv.innerHTML !== '';
+                });
+
+                if (!hasErrors) {
+                    alert('✅ 폼 유효성 검사 통과! 모든 입력이 올바릅니다.');
+                } else {
+                    alert('❌ 입력 오류가 있습니다. 빨간색으로 표시된 필드를 확인해주세요.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

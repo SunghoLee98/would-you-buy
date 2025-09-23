@@ -1,0 +1,31 @@
+{
+  "name": "e2e",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:headed": "playwright test --headed",
+    "test:chrome": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:mobile": "playwright test --project='Mobile Chrome' --project='Mobile Safari'",
+    "test:auth": "playwright test tests/auth/",
+    "test:registration": "playwright test tests/auth/registration.spec.ts",
+    "test:login": "playwright test tests/auth/login.spec.ts",
+    "test:logout": "playwright test tests/auth/logout.spec.ts",
+    "test:protected": "playwright test tests/auth/protected-routes.spec.ts",
+    "test:validation": "playwright test tests/auth/form-validation.spec.ts",
+    "report": "playwright show-report",
+    "install": "playwright install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "playwright": "^1.55.0"
+  }
+}
