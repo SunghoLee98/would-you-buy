@@ -146,7 +146,7 @@ const LoginForm: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isValidating },
+    formState: { errors },
     trigger,
   } = useForm<LoginFormData>({
     resolver: yupResolver(schema),
@@ -182,8 +182,9 @@ const LoginForm: React.FC = () => {
   };
 
   const handleSocialLogin = (provider: 'google' | 'kakao' | 'naver') => {
-    // Redirect to social login endpoint
-    window.location.href = `http://localhost:7070/api/v1/auth/oauth/${provider}`;
+    // Redirect to social login endpoint - API 명세서 준수
+    const baseUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:7070/api/v1';
+    window.location.href = `${baseUrl}/auth/oauth/${provider}`;
   };
 
   return (

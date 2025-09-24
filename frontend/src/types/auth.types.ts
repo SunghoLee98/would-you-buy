@@ -47,18 +47,19 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
-// API Response Types
+// API Response Types - 100% API 명세서 준수 (Section 1. 공통 사항)
 export interface ApiResponse<T = any> {
   success: boolean;
-  message?: string;
-  data?: T;
-  error?: ApiError;
+  message: string;
+  data: T | null;
+  timestamp: string; // ISO-8601 DateTime
+  errors: ApiError[] | null;
 }
 
 export interface ApiError {
   code: string;
+  field: string;
   message: string;
-  details?: Record<string, string>;
 }
 
 export interface RegisterResponse {

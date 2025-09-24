@@ -40,7 +40,10 @@ class SecurityConfig(
                         "/api/v1/auth/**",
                         "/api/v1/health",
                         "/api/v1/health/**",
-                        "/actuator/**"
+                        "/actuator/**",
+                        "/api/v1/stocks/voting",        // 기본 투표 대시보드 (비인증)
+                        "/api/v1/public/**",            // 공개 API
+                        "/api/v1/voting/status"         // 투표 시스템 상태
                     ).permitAll()
                     .anyRequest().authenticated()
             }

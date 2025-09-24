@@ -47,11 +47,11 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (error.response.data && typeof error.response.data === 'object' &&
-          'error' in error.response.data) {
+          'errors' in error.response.data) {
         const errorData = error.response.data as ApiResponse;
 
-        // Check if it's a token expiry issue
-        if (errorData.error?.code === 'TOKEN_EXPIRED') {
+        // Check if it's a token expiry issue - API 명세서 준수: errors 배열 체크
+        if (errorData.errors?.some(err => err.code === 'TOKEN_EXPIRED')) {
           originalRequest._retry = true;
 
           if (!isRefreshing) {

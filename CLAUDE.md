@@ -3,8 +3,6 @@
 
 # development workflow
 
-if it is available, make 2,3 agents work in parallel
-
 1. architect agent: design API specifications, data models, and system architecture
 - write result to 'docs/api_specifications.md', 'docs/data_models.md', 'docs/system_architecture.md'
 - Any important decisions MUST be documented in CLAUDE.md
@@ -36,7 +34,7 @@ if it is available, make 2,3 agents work in parallel
 # environment
 
 - backend: localhost:7070
-- frontend: localhost:5001
+- frontend: localhost:3001
 - database: localhost:5432
 
 # technical stack
