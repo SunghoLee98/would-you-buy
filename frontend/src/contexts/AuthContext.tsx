@@ -92,10 +92,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setStoredUser(userData);
         setUser(userData);
       } else {
-        setError(response.error?.message || '로그인에 실패했습니다.');
+        // API 명세서 준수: errors 배열에서 첫 번째 오류 메시지 추출
+        const firstError = response.errors?.[0]?.message || '로그인에 실패했습니다.';
+        setError(firstError);
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.error?.message || '로그인 중 오류가 발생했습니다.';
+      // API 명세서 준수: errors 배열에서 첫 번째 오류 메시지 추출
+      const errorMessage = err.response?.data?.errors?.[0]?.message || '로그인 중 오류가 발생했습니다.';
       setError(errorMessage);
       throw err;
     } finally {
@@ -113,19 +116,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Auto-login after successful registration
         await login({ email: data.email, password: data.password });
       } else {
-        const errorMessage = response.error?.message || '회원가입에 실패했습니다.';
-        const detailErrors = response.error?.details;
-        if (detailErrors) {
-          const firstError = Object.values(detailErrors)[0];
-          setError(firstError || errorMessage);
-        } else {
-          setError(errorMessage);
-        }
-        throw new Error(errorMessage);
+        // API 명세서 준수: errors 배열에서 첫 번째 오류 메시지 추출
+        const firstError = response.errors?.[0]?.message || '회원가입에 실패했습니다.';
+        setError(firstError);
+        throw new Error(firstError);
       }
     } catch (err: any) {
       if (!error) {
-        const errorMessage = err.response?.data?.error?.message || '회원가입 중 오류가 발생했습니다.';
+        // API 명세서 준수: errors 배열에서 첫 번째 오류 메시지 추출
+        const errorMessage = err.response?.data?.errors?.[0]?.message || '회원가입 중 오류가 발생했습니다.';
         setError(errorMessage);
       }
       throw err;

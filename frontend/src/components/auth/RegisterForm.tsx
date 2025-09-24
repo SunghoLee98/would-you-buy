@@ -14,14 +14,12 @@ import {
   Input,
   Button,
   ErrorMessage,
-  SuccessMessage,
   CheckboxWrapper,
   Checkbox,
   CheckboxLabel,
   LoadingSpinner,
 } from '../../styles/shared';
 import { theme } from '../../styles/theme';
-import { validatePassword, validateUsername } from '../../utils/auth';
 
 const Container = styled.div`
   min-height: 100vh;
@@ -154,7 +152,7 @@ const RegisterForm: React.FC = () => {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isValidating },
+    formState: { errors },
     trigger,
   } = useForm<RegisterFormData>({
     resolver: yupResolver(schema),

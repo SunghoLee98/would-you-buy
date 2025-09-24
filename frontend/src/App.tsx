@@ -44,15 +44,8 @@ function App() {
             <Route path="/register" element={<RegisterForm />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
 
-            {/* Protected routes */}
-            <Route
-              path="/dashboard"
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              }
-            />
+            {/* Dashboard - now public route for better accessibility */}
+            <Route path="/dashboard" element={<Dashboard />} />
 
             {/* Default redirect */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

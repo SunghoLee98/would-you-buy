@@ -204,4 +204,219 @@ export class NetworkHelpers {
 
     expect(messages).toHaveLength(0);
   }
+
+  async simulateNetworkFailure(url: string) {
+    await this.page.route(url, route => {
+      route.abort('internetdisconnected');
+    });
+  }
+
+  async simulateServerError(url: string, status: number = 500) {
+    await this.page.route(url, route => {
+      route.fulfill({
+        status,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Server Error' })
+      });
+    });
+  }
+}
+
+/**
+ * Voting dashboard test helpers
+ */
+export class VotingHelpers {
+  constructor(private page: Page) {}
+
+  async navigateToDashboard() {
+    await this.page.goto('/dashboard');
+    await this.page.waitForLoadState('networkidle');
+  }
+
+  async waitForKospiLoad() {
+    await expect(this.page.locator('[data-testid="kospi-hero-card"]')).toBeVisible();
+    await expect(this.page.locator('[data-testid="kospi-index-value"]')).toBeVisible();
+  }
+
+  async waitForStockCardsLoad() {
+    await expect(this.page.locator('[data-testid="stock-voting-card"]')).toHaveCount(8, { timeout: 10000 });
+  }
+
+  async voteOnKospi(direction: 'UP' | 'DOWN') {
+    const kospiCard = this.page.locator('[data-testid="kospi-hero-card"]');
+    const voteButton = kospiCard.locator(`[data-testid="vote-${direction.toLowerCase()}-button"]`);
+
+    await expect(voteButton).toBeVisible();
+    await voteButton.click();
+  }
+
+  async voteOnStock(stockCode: string, direction: 'UP' | 'DOWN') {
+    const stockCard = this.page.locator(`[data-testid="stock-card-${stockCode}"]`);
+    const voteButton = stockCard.locator(`[data-testid="vote-${direction.toLowerCase()}-button"]`);
+
+    await expect(voteButton).toBeVisible();
+    await voteButton.click();
+  }
+
+  async checkVoteConfirmation(stockCode: string, direction: 'UP' | 'DOWN') {
+    const stockCard = this.page.locator(`[data-testid="stock-card-${stockCode}"]`);
+    await expect(stockCard.locator('[data-testid="vote-success"]')).toBeVisible();
+    await expect(stockCard.locator(`[data-testid="voted-${direction.toLowerCase()}"]`)).toBeVisible();
+  }
+
+  async checkVoteAnimation() {
+    // Wait for confetti or success animation
+    await expect(this.page.locator('[data-testid="confetti-animation"], .vote-success-animation')).toBeVisible({ timeout: 3000 });
+  }
+
+  async checkLoginPrompt() {
+    await expect(this.page.locator('[data-testid="login-prompt"]')).toBeVisible();
+    await expect(this.page.locator('[data-testid="login-prompt"]')).toContainText('로그인');
+  }
+
+  async waitForWebSocketConnection() {
+    // Wait for WebSocket connection to be established
+    await this.page.waitForFunction(() => {
+      return window.WebSocket && window.WebSocket.prototype.readyState !== undefined;
+    });
+  }
+
+  async checkVotingStatistics(stockCode: string) {
+    const statsElement = this.page.locator(`[data-testid="voting-stats-${stockCode}"]`);
+    await expect(statsElement).toBeVisible();
+    await expect(statsElement.locator('[data-testid="up-percentage"]')).toBeVisible();
+    await expect(statsElement.locator('[data-testid="down-percentage"]')).toBeVisible();
+  }
+
+  async mockStockData() {
+    const mockData = {
+      kospi: {
+        code: 'KS11',
+        name: 'KOSPI',
+        currentPrice: 2450.50,
+        changePercent: 1.25,
+        isPositive: true
+      },
+      stocks: [
+        {
+          code: '005930',
+          nameKorean: '삼성전자',
+          currentPrice: 68000,
+          changePercent: -0.8,
+          isPositive: false
+        },
+        {
+          code: '000660',
+          nameKorean: 'SK하이닉스',
+          currentPrice: 89500,
+          changePercent: 2.1,
+          isPositive: true
+        },
+        {
+          code: '035420',
+          nameKorean: 'NAVER',
+          currentPrice: 188500,
+          changePercent: 0.5,
+          isPositive: true
+        },
+        {
+          code: '035720',
+          nameKorean: '카카오',
+          currentPrice: 45200,
+          changePercent: -1.2,
+          isPositive: false
+        }
+      ]
+    };
+
+    await this.page.route('**/api/stocks/voting', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: mockData
+        })
+      });
+    });
+
+    return mockData;
+  }
+
+  async mockVoteStatistics() {
+    const mockStats = {
+      'KS11': { upVotes: 65, downVotes: 35, totalVotes: 100 },
+      '005930': { upVotes: 45, downVotes: 55, totalVotes: 100 },
+      '000660': { upVotes: 72, downVotes: 28, totalVotes: 100 },
+      '035420': { upVotes: 58, downVotes: 42, totalVotes: 100 },
+      '035720': { upVotes: 38, downVotes: 62, totalVotes: 100 }
+    };
+
+    await this.page.route('**/api/votes/statistics', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: mockStats
+        })
+      });
+    });
+
+    return mockStats;
+  }
+
+  async mockUserVotes(votes: Array<{stockCode: string, direction: 'UP' | 'DOWN'}> = []) {
+    await this.page.route('**/api/votes/my-votes', route => {
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: votes.map(vote => ({
+            stockCode: vote.stockCode,
+            direction: vote.direction,
+            votedAt: new Date().toISOString()
+          }))
+        })
+      });
+    });
+  }
+}
+
+/**
+ * Mobile helpers
+ */
+export class MobileHelpers {
+  constructor(private page: Page) {}
+
+  async setMobileViewport() {
+    await this.page.setViewportSize({ width: 375, height: 667 });
+  }
+
+  async setTabletViewport() {
+    await this.page.setViewportSize({ width: 768, height: 1024 });
+  }
+
+  async setDesktopViewport() {
+    await this.page.setViewportSize({ width: 1280, height: 720 });
+  }
+
+  async checkTouchFriendly(selector: string) {
+    const element = this.page.locator(selector);
+    const box = await element.boundingBox();
+
+    if (!box) {
+      throw new Error(`Element ${selector} not found`);
+    }
+
+    // Touch targets should be at least 44x44px for good usability
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+  }
+
+  async simulateTouchGesture(selector: string) {
+    const element = this.page.locator(selector);
+    await element.tap();
+  }
 }
