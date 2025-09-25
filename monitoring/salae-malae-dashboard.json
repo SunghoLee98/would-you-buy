@@ -1,0 +1,388 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "살래말래 - 주식 예측 투표 서비스 모니터링",
+    "description": "살래말래 서비스의 백엔드, 프론트엔드, 비즈니스 메트릭 종합 대시보드",
+    "tags": ["salae-malae", "stock-voting", "backend", "frontend", "business-metrics"],
+    "timezone": "Asia/Seoul",
+    "editable": true,
+    "graphTooltip": 1,
+    "version": 1,
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "서비스 상태",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "up{job=\"salae-malae-backend\"}",
+            "legendFormat": "백엔드 서비스",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 4,
+          "x": 0,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "mappings": [
+              {
+                "options": {
+                  "0": {
+                    "text": "DOWN",
+                    "color": "red"
+                  },
+                  "1": {
+                    "text": "UP",
+                    "color": "green"
+                  }
+                },
+                "type": "value"
+              }
+            ],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "green",
+                  "value": 1
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "API 응답시간 (평균)",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_sum{job=\"salae-malae-backend\"}[5m]) / rate(http_server_requests_seconds_count{job=\"salae-malae-backend\"}[5m])",
+            "legendFormat": "평균 응답시간",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 4,
+          "x": 4,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 0.2
+                },
+                {
+                  "color": "red",
+                  "value": 0.5
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "API 요청률 (RPS)",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_count{job=\"salae-malae-backend\"}[5m])",
+            "legendFormat": "초당 요청수",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 4,
+          "x": 8,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "에러율",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_count{job=\"salae-malae-backend\",status=~\"4..|5..\"}[5m]) / rate(http_server_requests_seconds_count{job=\"salae-malae-backend\"}[5m]) * 100",
+            "legendFormat": "에러율 (%)",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 4,
+          "x": 12,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 1
+                },
+                {
+                  "color": "red",
+                  "value": 5
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "API 응답시간 분포",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{job=\"salae-malae-backend\"}[5m]))",
+            "legendFormat": "95th percentile",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "histogram_quantile(0.90, rate(http_server_requests_seconds_bucket{job=\"salae-malae-backend\"}[5m]))",
+            "legendFormat": "90th percentile",
+            "refId": "B"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "histogram_quantile(0.50, rate(http_server_requests_seconds_bucket{job=\"salae-malae-backend\"}[5m]))",
+            "legendFormat": "Median",
+            "refId": "C"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 4
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "HTTP 상태코드별 요청",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_count{job=\"salae-malae-backend\",status=~\"2..\"}[5m])",
+            "legendFormat": "2xx (성공)",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_count{job=\"salae-malae-backend\",status=~\"4..\"}[5m])",
+            "legendFormat": "4xx (클라이언트 에러)",
+            "refId": "B"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_count{job=\"salae-malae-backend\",status=~\"5..\"}[5m])",
+            "legendFormat": "5xx (서버 에러)",
+            "refId": "C"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 4
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "reqps"
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "메모리 사용량",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "jvm_memory_used_bytes{job=\"salae-malae-backend\",area=\"heap\"} / 1024 / 1024",
+            "legendFormat": "Heap Memory (MB)",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "jvm_memory_max_bytes{job=\"salae-malae-backend\",area=\"heap\"} / 1024 / 1024",
+            "legendFormat": "Max Heap Memory (MB)",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 12
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "MB"
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "GC 활동",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(jvm_gc_collection_seconds_count{job=\"salae-malae-backend\"}[5m])",
+            "legendFormat": "GC 횟수/초 ({{gc}})",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 12
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "ops"
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "데이터베이스 연결 풀",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "hikaricp_connections_active{job=\"salae-malae-backend\"}",
+            "legendFormat": "활성 연결",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "hikaricp_connections_idle{job=\"salae-malae-backend\"}",
+            "legendFormat": "유휴 연결",
+            "refId": "B"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "hikaricp_connections_max{job=\"salae-malae-backend\"}",
+            "legendFormat": "최대 연결",
+            "refId": "C"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 20
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "최근 로그 (에러/경고)",
+        "type": "logs",
+        "targets": [
+          {
+            "datasource": "Loki",
+            "expr": "{job=\"salae-malae-backend\"} |= \"ERROR\" or \"WARN\"",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 20
+        }
+      },
+      {
+        "id": 11,
+        "title": "스레드 상태",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "jvm_threads_live_threads{job=\"salae-malae-backend\"}",
+            "legendFormat": "Live Threads",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "jvm_threads_peak_threads{job=\"salae-malae-backend\"}",
+            "legendFormat": "Peak Threads",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 28
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      }
+    ]
+  },
+  "folderId": null,
+  "overwrite": true
+}
