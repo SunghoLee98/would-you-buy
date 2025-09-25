@@ -52,13 +52,31 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.web: DEBUG
   pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
+  file:
+    name: ./logs/salae-malae-backend.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 10
+      total-size-cap: 1GB
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health,info,metrics,prometheus
+      base-path: /actuator
   endpoint:
     health:
       show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      service: salae-malae-backend
+      environment: ${spring.profiles.active}

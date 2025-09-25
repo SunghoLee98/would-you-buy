@@ -1,0 +1,336 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "살래말래 - 비즈니스 메트릭 대시보드",
+    "description": "투표 활동, 사용자 참여, 예측 정확도 등 비즈니스 핵심 지표 모니터링",
+    "tags": ["salae-malae", "business", "voting", "users", "accuracy"],
+    "timezone": "Asia/Seoul",
+    "editable": true,
+    "graphTooltip": 1,
+    "version": 1,
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "refresh": "1m",
+    "panels": [
+      {
+        "id": 1,
+        "title": "일일 투표 현황",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_votes_total[24h])",
+            "legendFormat": "총 투표수",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short",
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 100
+                },
+                {
+                  "color": "green",
+                  "value": 500
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "활성 사용자",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_active_users[1h])",
+            "legendFormat": "시간당 활성 사용자",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 3,
+        "title": "KOSPI 투표 현황",
+        "type": "piechart",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_kospi_votes_total{direction=\"up\"}[24h])",
+            "legendFormat": "상승 예측",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_kospi_votes_total{direction=\"down\"}[24h])",
+            "legendFormat": "하락 예측",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "신규 사용자 등록",
+        "type": "stat",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_user_registrations_total[24h])",
+            "legendFormat": "일일 신규 등록",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 4,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "시간별 투표 활동",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(salae_malae_votes_total[5m]) * 60",
+            "legendFormat": "투표/분",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 4
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 6,
+        "title": "인기 종목 투표 순위",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_stock_votes_total{stock_code=\"005930\"}[1h])",
+            "legendFormat": "삼성전자",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_stock_votes_total{stock_code=\"000660\"}[1h])",
+            "legendFormat": "SK하이닉스",
+            "refId": "B"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_stock_votes_total{stock_code=\"035420\"}[1h])",
+            "legendFormat": "NAVER",
+            "refId": "C"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "increase(salae_malae_stock_votes_total{stock_code=\"035720\"}[1h])",
+            "legendFormat": "카카오",
+            "refId": "D"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        }
+      },
+      {
+        "id": 7,
+        "title": "예측 정확도 추이",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "salae_malae_prediction_accuracy_ratio",
+            "legendFormat": "전체 정확도 (%)",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "salae_malae_kospi_accuracy_ratio",
+            "legendFormat": "KOSPI 정확도 (%)",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 12
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100
+          }
+        }
+      },
+      {
+        "id": 8,
+        "title": "사용자 참여율",
+        "type": "gauge",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "(increase(salae_malae_votes_total[24h]) / increase(salae_malae_page_views_total[24h])) * 100",
+            "legendFormat": "참여율 (%)",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "red",
+                  "value": 0
+                },
+                {
+                  "color": "yellow",
+                  "value": 30
+                },
+                {
+                  "color": "green",
+                  "value": 60
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "id": 9,
+        "title": "랭킹 변동 현황",
+        "type": "table",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "topk(10, salae_malae_user_score)",
+            "legendFormat": "",
+            "refId": "A",
+            "format": "table"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 20
+        },
+        "fieldConfig": {
+          "defaults": {
+            "custom": {
+              "displayMode": "basic"
+            }
+          }
+        }
+      },
+      {
+        "id": 10,
+        "title": "API 응답시간 (투표 관련)",
+        "type": "timeseries",
+        "targets": [
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_sum{job=\"salae-malae-backend\",uri=~\"/api/votes.*\"}[5m]) / rate(http_server_requests_seconds_count{job=\"salae-malae-backend\",uri=~\"/api/votes.*\"}[5m])",
+            "legendFormat": "투표 API 응답시간",
+            "refId": "A"
+          },
+          {
+            "datasource": "Prometheus",
+            "expr": "rate(http_server_requests_seconds_sum{job=\"salae-malae-backend\",uri=~\"/api/ranking.*\"}[5m]) / rate(http_server_requests_seconds_count{job=\"salae-malae-backend\",uri=~\"/api/ranking.*\"}[5m])",
+            "legendFormat": "랭킹 API 응답시간",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 20
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s"
+          }
+        }
+      }
+    ]
+  },
+  "folderId": null,
+  "overwrite": true
+}

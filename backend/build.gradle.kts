@@ -45,6 +45,10 @@ dependencies {
     // Cache
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.8")
 
+    // Monitoring
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-registry-prometheus")
+
     // Development tools
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
