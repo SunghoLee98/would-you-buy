@@ -55,7 +55,7 @@ logging:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
   file:
-    name: ./logs/salae-malae-backend.log
+    name: ../logs/salae-malae-backend.log
   logback:
     rollingpolicy:
       max-file-size: 100MB
