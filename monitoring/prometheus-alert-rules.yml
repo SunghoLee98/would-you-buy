@@ -1,0 +1,150 @@
+groups:
+  - name: salae_malae_alerts
+    interval: 30s
+    rules:
+      # 높은 에러율 알림
+      - alert: HighErrorRate
+        expr: rate(logback_events_total{level="error",service="salae-malae-backend"}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: salae-malae
+        annotations:
+          summary: "높은 에러 발생률 감지"
+          description: "{{ $labels.service }} 서비스에서 5분간 에러율이 5%를 초과했습니다. (현재: {{ $value | humanizePercentage }})"
+
+      # API 응답 시간 지연
+      - alert: SlowAPIResponse
+        expr: histogram_quantile(0.95, rate(salae_malae_api_response_time_seconds_bucket[5m])) > 2
+        for: 10m
+        labels:
+          severity: warning
+          service: salae-malae
+        annotations:
+          summary: "API 응답 시간 지연"
+          description: "API 응답 시간의 95 백분위수가 2초를 초과했습니다. (현재: {{ $value }}초)"
+
+      # 메모리 사용량 경고
+      - alert: HighMemoryUsage
+        expr: (jvm_memory_used_bytes{area="heap",service="salae-malae-backend"} / jvm_memory_max_bytes{area="heap",service="salae-malae-backend"}) > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: salae-malae
+        annotations:
+          summary: "높은 메모리 사용량"
+          description: "JVM 힙 메모리 사용량이 80%를 초과했습니다. (현재: {{ $value | humanizePercentage }})"
+
+      # 데이터베이스 연결 풀 고갈
+      - alert: DatabaseConnectionPoolExhausted
+        expr: hikaricp_connections_active{pool="SalaeMalaeHikariPool"} >= hikaricp_connections_max{pool="SalaeMalaeHikariPool"}
+        for: 1m
+        labels:
+          severity: critical
+          service: salae-malae
+        annotations:
+          summary: "데이터베이스 연결 풀 고갈"
+          description: "데이터베이스 연결 풀이 최대치에 도달했습니다. 활성 연결: {{ $value }}"
+
+      # 로그인 실패율 높음
+      - alert: HighLoginFailureRate
+        expr: rate(salae_malae_login_attempts_total{success="false"}[15m]) > rate(salae_malae_login_attempts_total{success="true"}[15m])
+        for: 15m
+        labels:
+          severity: warning
+          service: salae-malae
+        annotations:
+          summary: "높은 로그인 실패율"
+          description: "로그인 실패율이 성공률을 초과했습니다. 보안 공격 가능성을 확인하세요."
+
+      # 서비스 다운
+      - alert: ServiceDown
+        expr: up{job="salae-malae-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: salae-malae
+        annotations:
+          summary: "서비스 다운"
+          description: "{{ $labels.job }} 서비스가 응답하지 않습니다."
+
+      # 디스크 공간 부족 (로그 파일)
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/",job="node-exporter"} / node_filesystem_size_bytes{mountpoint="/",job="node-exporter"}) < 0.1
+        for: 5m
+        labels:
+          severity: warning
+          service: salae-malae
+        annotations:
+          summary: "디스크 공간 부족"
+          description: "디스크 사용 가능 공간이 10% 미만입니다. 로그 파일 정리가 필요할 수 있습니다."
+
+      # 배치 작업 실패
+      - alert: BatchJobFailed
+        expr: increase(salae_malae_batch_job_duration_seconds_count{status="failure"}[1h]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          service: salae-malae
+        annotations:
+          summary: "배치 작업 실패"
+          description: "{{ $labels.job }} 배치 작업이 실패했습니다."
+
+      # 캐시 히트율 낮음
+      - alert: LowCacheHitRate
+        expr: (rate(salae_malae_cache_access_total{result="hit"}[5m]) / rate(salae_malae_cache_access_total[5m])) < 0.5
+        for: 15m
+        labels:
+          severity: info
+          service: salae-malae
+        annotations:
+          summary: "낮은 캐시 히트율"
+          description: "캐시 히트율이 50% 미만입니다. 캐시 설정 최적화가 필요할 수 있습니다."
+
+      # 예측 정확도 낮음
+      - alert: LowPredictionAccuracy
+        expr: salae_malae_prediction_accuracy_ratio < 0.3
+        for: 1h
+        labels:
+          severity: info
+          service: salae-malae
+        annotations:
+          summary: "낮은 예측 정확도"
+          description: "전체 사용자의 예측 정확도가 30% 미만입니다."
+
+  # 비즈니스 메트릭 알림
+  - name: salae_malae_business_alerts
+    interval: 1m
+    rules:
+      # 활성 사용자 수 감소
+      - alert: ActiveUsersDecreased
+        expr: salae_malae_active_users < 100
+        for: 30m
+        labels:
+          severity: info
+          service: salae-malae
+        annotations:
+          summary: "활성 사용자 수 감소"
+          description: "활성 사용자 수가 100명 미만으로 감소했습니다. (현재: {{ $value }}명)"
+
+      # 투표 참여율 낮음
+      - alert: LowVotingParticipation
+        expr: rate(salae_malae_votes_total[1h]) < 10
+        for: 1h
+        labels:
+          severity: info
+          service: salae-malae
+        annotations:
+          summary: "낮은 투표 참여율"
+          description: "지난 1시간 동안 시간당 투표 수가 10건 미만입니다."
+
+      # WebSocket 연결 급증
+      - alert: WebSocketConnectionSpike
+        expr: rate(salae_malae_websocket_connections_total{action="connect"}[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: salae-malae
+        annotations:
+          summary: "WebSocket 연결 급증"
+          description: "WebSocket 연결이 분당 100건을 초과했습니다. DDoS 공격 가능성을 확인하세요."

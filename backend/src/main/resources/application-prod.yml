@@ -1,0 +1,46 @@
+spring:
+  profiles:
+    active: prod
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        use_sql_comments: false
+
+logging:
+  level:
+    root: WARN
+    com.salaemalae: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    # 프로덕션 환경에서는 최소한의 로깅만 활성화
+    org.springframework.boot.actuate: INFO
+    org.hibernate: WARN
+
+# 프로덕션 환경 보안 강화 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        # 프로덕션에서는 최소한의 엔드포인트만 노출
+        include: health,metrics,prometheus
+      cors:
+        allowed-origins: []
+  endpoint:
+    health:
+      show-details: never  # 프로덕션에서는 상세정보 숨김
+      show-components: when-authorized
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+
+# 프로덕션 보안 설정
+server:
+  error:
+    include-message: never
+    include-binding-errors: never
+    include-stacktrace: never
+    include-exception: false

@@ -48,9 +48,11 @@ jwt:
 
 logging:
   level:
-    com.salaemalae: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.web: DEBUG
+    com.salaemalae: INFO
+    org.springframework.security: INFO
+    org.springframework.web: INFO
+    # Development profile에서는 DEBUG 레벨 사용
+    # 프로덕션에서는 INFO 레벨 권장
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:-}] %logger{36} - %msg%n"
@@ -61,17 +63,23 @@ logging:
       max-file-size: 100MB
       max-history: 10
       total-size-cap: 1GB
+      file-name-pattern: ./logs/salae-malae-backend-%d{yyyy-MM-dd}.%i.log.gz
 
 management:
   endpoints:
     web:
       exposure:
+        # 필요한 엔드포인트만 노출 (프로덕션 환경 보안 강화)
         include: health,info,metrics,prometheus
       base-path: /actuator
   endpoint:
     health:
-      show-details: always
+      # 인증된 사용자만 상세 정보 조회 가능
+      show-details: when-authorized
+      # 개발 환경에서는 always로 설정 가능
     prometheus:
+      enabled: true
+    info:
       enabled: true
   metrics:
     export:

@@ -50,14 +50,24 @@
 - 사용자 참여율
 
 ### ✅ 알림 룰 설정
-한국어 알림 메시지로 다음 항목 모니터링:
+**Prometheus 알림 룰 파일**: `prometheus-alert-rules.yml`
+
+**인프라 알림**:
 - 서비스 다운타임 (1분)
-- 높은 에러율 (5% 이상, 3분)
-- API 응답 지연 (1초 이상, 5분)
-- 높은 메모리 사용량 (85% 이상, 5분)
-- DB 연결 풀 사용량 높음 (80% 이상, 3분)
-- 투표 활동 저하 (30분)
-- 높은 GC 활동 (5분)
+- 높은 에러율 (5% 이상, 5분)
+- API 응답 지연 (2초 이상, 10분)
+- 높은 메모리 사용량 (80% 이상, 5분)
+- DB 연결 풀 고갈 (100%, 1분)
+- 디스크 공간 부족 (10% 미만, 5분)
+- 배치 작업 실패
+
+**비즈니스 알림**:
+- 로그인 실패율 높음 (15분)
+- 투표 활동 저하 (1시간)
+- 활성 사용자 감소 (100명 미만, 30분)
+- WebSocket 연결 급증 (분당 100건, 5분)
+- 낮은 캐시 히트율 (50% 미만, 15분)
+- 낮은 예측 정확도 (30% 미만, 1시간)
 
 ## 🔧 설정 파일 위치
 
@@ -66,10 +76,19 @@
 ├── monitoring/
 │   ├── salae-malae-dashboard.json           # 인프라 대시보드
 │   ├── salae-malae-business-dashboard.json  # 비즈니스 대시보드
+│   ├── prometheus-alert-rules.yml          # Prometheus 알림 룰
 │   └── README.md                           # 이 가이드
 ├── backend/
 │   ├── build.gradle.kts                    # 모니터링 의존성 추가
-│   └── src/main/resources/application.yml  # Actuator 및 로그 설정
+│   ├── src/main/resources/
+│   │   ├── application.yml                 # 기본 설정
+│   │   ├── application-dev.yml             # 개발 환경 설정
+│   │   └── application-prod.yml            # 프로덕션 환경 설정
+│   └── src/main/kotlin/com/salaemalae/
+│       └── metrics/                        # 메트릭 수집 구현
+│           ├── VotingMetrics.kt            # 비즈니스 메트릭
+│           ├── MetricsInterceptor.kt       # API 메트릭 인터셉터
+│           └── MetricsConfig.kt            # 메트릭 설정
 └── logs/                                   # 로그 파일 저장 위치
 ```
 
@@ -122,37 +141,73 @@
 
 ## 📈 비즈니스 메트릭 구현
 
-비즈니스 대시보드의 모든 메트릭이 작동하려면 다음 커스텀 메트릭을 백엔드에 구현해야 합니다:
+### ✅ 구현 완료된 메트릭
+
+`VotingMetrics` 컴포넌트가 다음 메트릭들을 수집합니다:
+
+**투표 관련 메트릭**:
+- `salae_malae_votes_total`: 총 투표 수 (stock_code, direction 태그)
+- `salae_malae_kospi_votes_total`: KOSPI 지수 투표 수 (direction 태그)
+- `salae_malae_predictions_total`: 예측 결과 (stock_code, result 태그)
+- `salae_malae_prediction_accuracy_ratio`: 전체 예측 정확도 비율
+
+**사용자 관련 메트릭**:
+- `salae_malae_active_users`: 활성 사용자 수 (게이지)
+- `salae_malae_login_attempts_total`: 로그인 시도 수 (success, provider 태그)
+- `salae_malae_user_registrations_total`: 사용자 가입 수 (provider 태그)
+
+**성능 관련 메트릭**:
+- `salae_malae_api_response_time`: API 응답 시간 (endpoint, method, status 태그)
+- `salae_malae_cache_access_total`: 캐시 접근 수 (cache, result 태그)
+- `salae_malae_batch_job_duration`: 배치 작업 실행 시간 (job, status 태그)
+
+**시스템 관련 메트릭**:
+- `salae_malae_errors_total`: 오류 발생 수 (type, endpoint 태그)
+- `salae_malae_websocket_connections_total`: WebSocket 연결 수 (action 태그)
+
+### 사용 예시
 
 ```kotlin
-// 예시: 투표 메트릭
-@Component
-class VotingMetrics {
-    private val votesCounter = Counter.builder("salae_malae_votes_total")
-        .description("Total number of votes")
-        .tag("stock_code", "")
-        .tag("direction", "")
-        .register(Metrics.globalRegistry)
+@Service
+class YourService(
+    private val votingMetrics: VotingMetrics
+) {
+    fun processVote(userId: String, stockCode: String, direction: String) {
+        // 투표 메트릭 기록
+        votingMetrics.recordVote(stockCode, direction)
 
-    private val kospiVotesCounter = Counter.builder("salae_malae_kospi_votes_total")
-        .description("KOSPI votes")
-        .tag("direction", "")
-        .register(Metrics.globalRegistry)
-
-    // 사용법
-    fun recordVote(stockCode: String, direction: String) {
-        votesCounter.increment(
-            Tags.of("stock_code", stockCode, "direction", direction)
-        )
+        // KOSPI인 경우 별도 기록
+        if (stockCode == "KOSPI") {
+            votingMetrics.recordKospiVote(direction)
+        }
     }
 }
 ```
 
 ## 🔔 알림 설정
 
-현재 Prometheus 알림 룰이 설정되어 있습니다. 실제 알림을 받으려면:
+### Prometheus 알림 룰 적용
 
-1. **Alertmanager 설정** (선택사항)
+1. **알림 룰 파일 복사**:
+   ```bash
+   cp monitoring/prometheus-alert-rules.yml prometheus/rules/
+   ```
+
+2. **Prometheus 설정 업데이트** (`prometheus.yml`):
+   ```yaml
+   rule_files:
+     - "rules/*.yml"
+   ```
+
+3. **Prometheus 재시작**:
+   ```bash
+   docker restart prometheus
+   ```
+
+### Alertmanager 설정 (선택사항)
+
+실제 알림을 받으려면:
+1. **Alertmanager 설정** 파일 생성
 2. **Slack/Email 통합** 설정
 3. **알림 채널** 구성
 

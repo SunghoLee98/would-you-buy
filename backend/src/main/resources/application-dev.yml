@@ -1,0 +1,38 @@
+spring:
+  profiles:
+    active: dev
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: true
+
+logging:
+  level:
+    com.salaemalae: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# 개발 환경 actuator 설정
+management:
+  endpoints:
+    web:
+      exposure:
+        # 개발 환경에서는 모든 엔드포인트 노출 가능
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
+# 개발 환경 에러 표시
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on-param
+    include-exception: true
