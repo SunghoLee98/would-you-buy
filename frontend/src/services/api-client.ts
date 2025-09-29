@@ -12,6 +12,12 @@ import {
   UserVote,
   UserVoteStatistics
 } from '../types/voting.types';
+import {
+  UserStreak,
+  DailyPrediction,
+  StreakResponse,
+  StreakCalendarResponse
+} from '../types/streak.types';
 
 /**
  * 🎯 100% API 명세서 준수 API 클라이언트
@@ -234,6 +240,141 @@ class VotingAPIClient {
     } catch (error) {
       console.error('❌ getUserVoteStatistics error:', error);
       throw error;
+    }
+  }
+
+  // =============================================================================
+  // 5. 스트릭 시스템 (Mock 데이터)
+  // =============================================================================
+
+  /**
+   * Mock 데이터 생성 - 현실적인 사용자 연속 기록
+   */
+  private generateMockUserStreak(): UserStreak {
+    const today = new Date();
+    const currentStreak = Math.floor(Math.random() * 15) + 1; // 1-15일 현재 연속
+    const longestStreak = Math.max(currentStreak, Math.floor(Math.random() * 100) + 7); // 최소 7일
+    const totalPredictions = Math.floor(Math.random() * 500) + 50; // 50-550개
+    const successfulPredictions = Math.floor(totalPredictions * (0.4 + Math.random() * 0.4)); // 40-80% 성공률
+
+    const streakStartDate = new Date(today);
+    streakStartDate.setDate(today.getDate() - currentStreak + 1);
+
+    return {
+      currentStreak,
+      longestStreak,
+      totalPredictions,
+      successfulPredictions,
+      lastPredictionDate: today.toISOString(),
+      streakStartDate: currentStreak > 0 ? streakStartDate.toISOString() : null
+    };
+  }
+
+  /**
+   * Mock 데이터 생성 - 365일 일별 예측 기록 (GitHub 스타일)
+   */
+  private generateMockDailyPredictions(startDate: string, endDate: string): DailyPrediction[] {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const predictions: DailyPrediction[] = [];
+
+    // Add reasonable limit to prevent unbounded array generation
+    const MAX_DAYS = 400; // Reasonable limit for calendar view
+    const dayCount = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (dayCount > MAX_DAYS) {
+      console.warn(`Date range exceeds maximum limit of ${MAX_DAYS} days. Limiting to ${MAX_DAYS} days.`);
+    }
+
+    const current = new Date(start);
+    let daysProcessed = 0;
+
+    while (current <= end && daysProcessed < MAX_DAYS) {
+      // 80% 확률로 해당 날짜에 예측 있음
+      if (Math.random() > 0.2) {
+        const voteCount = Math.floor(Math.random() * 8) + 1; // 1-8개 투표
+        const correctCount = Math.floor(voteCount * (0.3 + Math.random() * 0.5)); // 30-80% 정답률
+        const accuracy = Math.round((correctCount / voteCount) * 100);
+        const success = accuracy >= 50;
+
+        predictions.push({
+          date: current.toISOString().split('T')[0],
+          success,
+          voteCount,
+          correctCount,
+          accuracy,
+          kospiCorrect: Math.random() > 0.4 // 60% KOSPI 정답률
+        });
+      }
+
+      current.setDate(current.getDate() + 1);
+      daysProcessed++;
+    }
+
+    return predictions;
+  }
+
+  /**
+   * 사용자 현재 연속 기록 조회 (Mock)
+   * GET /streaks/current
+   */
+  async getCurrentStreak(): Promise<UserStreak> {
+    try {
+      // Mock delay to simulate API call
+      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 200));
+
+      const mockData = this.generateMockUserStreak();
+
+      console.log('🔥 Mock getCurrentStreak:', mockData);
+
+      return mockData;
+    } catch (error) {
+      console.error('❌ getCurrentStreak mock error:', error);
+      throw new Error('연속 기록 조회에 실패했습니다');
+    }
+  }
+
+  /**
+   * 특정 기간 예측 기록 조회 (Mock)
+   * GET /streaks/calendar
+   */
+  async getStreakCalendar(startDate: string, endDate: string): Promise<DailyPrediction[]> {
+    try {
+      // Mock delay
+      await new Promise(resolve => setTimeout(resolve, 400 + Math.random() * 300));
+
+      const predictions = this.generateMockDailyPredictions(startDate, endDate);
+
+      console.log(`🗓️ Mock getStreakCalendar (${startDate} ~ ${endDate}):`, predictions.length, 'days');
+
+      return predictions;
+    } catch (error) {
+      console.error('❌ getStreakCalendar mock error:', error);
+      throw new Error('예측 기록 조회에 실패했습니다');
+    }
+  }
+
+  /**
+   * 연속 기록 업데이트 (Mock)
+   * POST /streaks/update
+   */
+  async updateStreak(): Promise<UserStreak> {
+    try {
+      // Mock delay
+      await new Promise(resolve => setTimeout(resolve, 200 + Math.random() * 150));
+
+      // 새로운 예측이 추가된 것처럼 데이터 생성
+      const updatedStreak = this.generateMockUserStreak();
+
+      // 현재 날짜로 마지막 예측 날짜 업데이트
+      updatedStreak.lastPredictionDate = new Date().toISOString();
+
+      console.log('🔥 Mock updateStreak:', updatedStreak);
+
+      return updatedStreak;
+    } catch (error) {
+      console.error('❌ updateStreak mock error:', error);
+      throw new Error('연속 기록 업데이트에 실패했습니다');
     }
   }
 
