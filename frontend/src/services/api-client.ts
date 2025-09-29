@@ -278,8 +278,18 @@ class VotingAPIClient {
     const end = new Date(endDate);
     const predictions: DailyPrediction[] = [];
 
+    // Add reasonable limit to prevent unbounded array generation
+    const MAX_DAYS = 400; // Reasonable limit for calendar view
+    const dayCount = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (dayCount > MAX_DAYS) {
+      console.warn(`Date range exceeds maximum limit of ${MAX_DAYS} days. Limiting to ${MAX_DAYS} days.`);
+    }
+
     const current = new Date(start);
-    while (current <= end) {
+    let daysProcessed = 0;
+
+    while (current <= end && daysProcessed < MAX_DAYS) {
       // 80% 확률로 해당 날짜에 예측 있음
       if (Math.random() > 0.2) {
         const voteCount = Math.floor(Math.random() * 8) + 1; // 1-8개 투표
@@ -298,6 +308,7 @@ class VotingAPIClient {
       }
 
       current.setDate(current.getDate() + 1);
+      daysProcessed++;
     }
 
     return predictions;

@@ -6,6 +6,8 @@
 import React, { useEffect, useState } from 'react';
 import streakService from '../../services/streakService';
 import { UserStreak, StreakMilestone, BadgeLevel } from '../../types/streak.types';
+import { STREAK_MILESTONES, CONFETTI_CONFIG, STORAGE_KEYS, STREAK_EMOJIS, ANIMATION_DURATION } from '../../constants/streak.constants';
+import ConfettiEffect from './ConfettiEffect';
 import styles from '../../styles/streak.module.css';
 
 interface StreakBadgeProps {
@@ -53,16 +55,37 @@ const StreakBadge: React.FC<StreakBadgeProps> = ({
   };
 
   const checkNewMilestone = (streakData: UserStreak) => {
-    const lastCheckKey = `lastMilestoneCheck_${userId || 'default'}`;
-    const lastCheck = parseInt(localStorage.getItem(lastCheckKey) || '0');
+    const lastCheckKey = STORAGE_KEYS.LAST_MILESTONE_CHECK(userId || '');
 
-    const milestoneThresholds = [7, 30, 100, 365];
+    // Validate localStorage value with proper error handling
+    let lastCheck = 0;
+    try {
+      const storedValue = localStorage.getItem(lastCheckKey);
+      if (storedValue) {
+        const parsed = parseInt(storedValue, 10);
+        if (!isNaN(parsed) && parsed >= 0 && parsed <= STREAK_MILESTONES.YEAR) {
+          lastCheck = parsed;
+        } else {
+          console.warn('Invalid milestone check value, resetting to 0');
+          localStorage.removeItem(lastCheckKey);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to read from localStorage:', error);
+      lastCheck = 0;
+    }
+
+    const milestoneThresholds = Object.values(STREAK_MILESTONES).sort((a, b) => a - b);
     const currentStreak = streakData.currentStreak;
 
     for (const threshold of milestoneThresholds) {
       if (currentStreak >= threshold && lastCheck < threshold) {
         triggerCelebration();
-        localStorage.setItem(lastCheckKey, threshold.toString());
+        try {
+          localStorage.setItem(lastCheckKey, threshold.toString());
+        } catch (error) {
+          console.error('Failed to write to localStorage:', error);
+        }
         break;
       }
     }
@@ -70,33 +93,9 @@ const StreakBadge: React.FC<StreakBadgeProps> = ({
 
   const triggerCelebration = () => {
     setShowCelebration(true);
-    setTimeout(() => setShowCelebration(false), 3000);
-
-    // 축하 애니메이션 효과
-    if (animate) {
-      createConfetti();
-    }
+    setTimeout(() => setShowCelebration(false), ANIMATION_DURATION.CELEBRATION);
   };
 
-  const createConfetti = () => {
-    const colors = ['#ff6b6b', '#ffd93d', '#6bcf7f', '#4dabf7', '#9775fa'];
-    const confettiCount = 30;
-
-    for (let i = 0; i < confettiCount; i++) {
-      const confetti = document.createElement('div');
-      confetti.className = styles.confetti;
-      confetti.style.position = 'fixed';
-      confetti.style.left = Math.random() * 100 + '%';
-      confetti.style.top = '-10px';
-      confetti.style.width = '10px';
-      confetti.style.height = '10px';
-      confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-      confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-      document.body.appendChild(confetti);
-
-      setTimeout(() => confetti.remove(), 3000);
-    }
-  };
 
   const getBadgeLevel = () => {
     if (!streak) return BadgeLevel.BRONZE;
@@ -119,15 +118,15 @@ const StreakBadge: React.FC<StreakBadgeProps> = ({
   };
 
   const getStreakEmoji = () => {
-    if (!streak) return '💤';
+    if (!streak) return STREAK_EMOJIS.INACTIVE;
     const days = streak.currentStreak;
 
-    if (days === 0) return '💤';
-    if (days >= 365) return '👑';
-    if (days >= 100) return '💎';
-    if (days >= 30) return '🏆';
-    if (days >= 7) return '🔥';
-    return '✨';
+    if (days === 0) return STREAK_EMOJIS.INACTIVE;
+    if (days >= STREAK_MILESTONES.YEAR) return STREAK_EMOJIS.YEAR;
+    if (days >= STREAK_MILESTONES.HUNDRED) return STREAK_EMOJIS.HUNDRED;
+    if (days >= STREAK_MILESTONES.MONTH) return STREAK_EMOJIS.MONTH;
+    if (days >= STREAK_MILESTONES.WEEK) return STREAK_EMOJIS.WEEK;
+    return STREAK_EMOJIS.STARTER;
   };
 
   if (loading) {
@@ -173,6 +172,9 @@ const StreakBadge: React.FC<StreakBadgeProps> = ({
           ))}
         </div>
       )}
+
+      {/* Confetti Effect */}
+      <ConfettiEffect active={showCelebration && animate} />
 
       {/* 축하 메시지 */}
       {showCelebration && (
